@@ -1,5 +1,7 @@
 # Legacy Alpha Remote
 
+Shared Sony camera-app architecture and build/install guidance lives in `../.codex/skills/sony-camera-app-workflow/SKILL.md`. See `DEVICE_FINDINGS.md` for behavior tested on the ILCE-5100 and remaining firmware questions.
+
 Legacy Alpha Remote is a Sony PMCADemo/OpenMemories Android 10 application for the Alpha 6000-era camera. It starts Sony Wi-Fi Direct, displays the group credentials and a session PIN on the camera, and serves a local browser shutter UI at `http://192.168.122.1:8080/` (or the validated IPv4 address reported by the camera). A MAC address or interface name is not a browser URL; older Sony firmware can expose one in the P2P configuration, so the app falls back to the standard `192.168.122.1` address and binds the listener on all local interfaces.
 
 Build and install helpers live in `scripts/`: `build.sh`, `verify-apk.sh`, `usb-status.sh`, `install.sh`, and `build-install.sh`. On modern Linux hosts, NDK r14b may need temporary `/tmp/legacyalpha-libs` symlinks for `libncurses.so.5` and `libtinfo.so.5`; the build script uses that directory automatically when present.
