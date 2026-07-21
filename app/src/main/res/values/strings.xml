@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Legacy Alpha Remote</string>
+    <string name="status_starting">Legacy Alpha Remote\n\nStarting camera and remote…</string>
+</resources>

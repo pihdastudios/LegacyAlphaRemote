@@ -1,0 +1,51 @@
+#include "embedded_web.h"
+
+namespace legacyalpha {
+
+const char kIndexHtml[] =
+"<!doctype html><html><head><meta charset=utf-8>"
+"<meta name=viewport content='width=device-width,initial-scale=1,user-scalable=no'>"
+"<title>Legacy Alpha Remote</title><link rel=stylesheet href=/style.css></head>"
+"<body><main><h1>Legacy Alpha Remote</h1><div id=connection class=bad>Connecting...</div>"
+"<section><label>Session PIN<input id=pin inputmode=numeric maxlength=6 pattern='[0-9]{6}'></label>"
+"<label>Countdown<select id=delay><option value=0>0 seconds</option><option value=2000>2 seconds</option>"
+"<option value=3000 selected>3 seconds</option><option value=5000>5 seconds</option>"
+"<option value=10000>10 seconds</option></select></label>"
+"<label class=check><input id=af type=checkbox checked> Autofocus</label></section>"
+"<button id=shutter disabled>SHUTTER</button><button id=cancel class=secondary hidden>Cancel countdown</button>"
+"<pre id=status>Waiting for camera...</pre><p id=result></p>"
+"<p class=note>Use only on the camera's local Wi-Fi network. HTTP does not protect traffic from other connected devices.</p>"
+"</main><script src=/app.js></script></body></html>";
+
+const char kStyleCss[] =
+"*{box-sizing:border-box}body{margin:0;background:#101114;color:#f5f5f5;font:18px sans-serif}"
+"main{max-width:560px;margin:auto;padding:20px;text-align:center}h1{font-size:1.55em}"
+"#connection{padding:10px;border-radius:8px;margin:12px 0}.good{background:#174d27}.bad{background:#681e25}"
+"section{display:grid;gap:12px;text-align:left;background:#202228;padding:16px;border-radius:12px}"
+"label{display:grid;gap:5px}input,select{font:inherit;padding:10px;border-radius:7px;border:1px solid #777}"
+".check{display:block}button{width:100%;min-height:120px;margin-top:18px;border:0;border-radius:50%;"
+"background:#e52d37;color:white;font-size:2em;font-weight:bold}button:disabled{background:#5b5b5b}"
+"button.secondary{min-height:54px;border-radius:9px;background:#a34c13;font-size:1.1em}"
+"pre{white-space:pre-wrap;text-align:left;background:#202228;padding:14px;border-radius:10px}"
+".note{color:#aaa;font-size:.75em} [hidden]{display:none!important}";
+
+const char kAppJs[] =
+"(function(){var pin=document.getElementById('pin'),sh=document.getElementById('shutter'),"
+"cancel=document.getElementById('cancel'),status=document.getElementById('status'),"
+"conn=document.getElementById('connection'),result=document.getElementById('result'),timer=null,backoff=5000;"
+"pin.value=sessionStorage.getItem('legacyalpha_pin')||'';pin.oninput=function(){sessionStorage.setItem('legacyalpha_pin',pin.value);};"
+"function xhr(method,path,body,done){var x=new XMLHttpRequest();x.open(method,path,true);x.timeout=6000;"
+"if(method==='POST'){x.setRequestHeader('Content-Type','application/json');x.setRequestHeader('X-LegacyAlpha-Pin',pin.value);}"
+"x.onreadystatechange=function(){if(x.readyState===4)done(x.status,x.responseText);};x.ontimeout=x.onerror=function(){done(0,'');};x.send(body||null);}"
+"function schedule(ms){clearTimeout(timer);timer=setTimeout(poll,ms);}"
+"function poll(){xhr('GET','/api/v1/status',null,function(code,text){if(code!==200){conn.className='bad';conn.textContent='Disconnected';sh.disabled=true;backoff=Math.min(15000,backoff*2);schedule(backoff);return;}"
+"var s;try{s=JSON.parse(text);}catch(e){schedule(5000);return;}backoff=5000;conn.className='good';conn.textContent='Connected';"
+"status.textContent='State: '+s.state+'\nCountdown: '+Math.ceil(s.countdown_remaining_ms/1000)+' s\nCamera ready: '+s.camera_ready+'\nLast error: '+(s.last_error||'none');"
+"var busy=s.state!=='armed';sh.disabled=busy||!/^[0-9]{6}$/.test(pin.value);cancel.hidden=!(s.state==='countdown'||s.state==='focusing');"
+"schedule((s.state==='countdown'||s.state==='focusing')?350:(s.state==='capturing'||s.state==='cooldown')?1000:5000);});}"
+"function id(){return 'phone-'+new Date().getTime()+'-'+Math.floor(Math.random()*1000000);}"
+"sh.onclick=function(){sh.disabled=true;var b=JSON.stringify({request_id:id(),delay_ms:parseInt(document.getElementById('delay').value,10),autofocus:document.getElementById('af').checked});"
+"xhr('POST','/api/v1/capture',b,function(code,text){result.textContent=text||'Request failed';poll();});};"
+"cancel.onclick=function(){cancel.disabled=true;xhr('POST','/api/v1/cancel','{}',function(code,text){cancel.disabled=false;result.textContent=text||'Cancel failed';poll();});};poll();}());";
+
+}  // namespace legacyalpha
