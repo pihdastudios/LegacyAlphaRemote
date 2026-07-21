@@ -40,7 +40,7 @@ const char kAppJs[] =
 "function schedule(ms){clearTimeout(timer);timer=setTimeout(poll,ms);}"
 "function poll(){xhr('GET','/api/v1/status',null,function(code,text){if(code!==200){conn.className='bad';conn.textContent='Disconnected';sh.disabled=true;backoff=Math.min(15000,backoff*2);schedule(backoff);return;}"
 "var s;try{s=JSON.parse(text);}catch(e){schedule(5000);return;}backoff=5000;conn.className='good';conn.textContent='Connected';"
-"status.textContent='State: '+s.state+'\nCountdown: '+Math.ceil(s.countdown_remaining_ms/1000)+' s\nCamera ready: '+s.camera_ready+'\nLast error: '+(s.last_error||'none');"
+"status.textContent='State: '+s.state+'\\nCountdown: '+Math.ceil(s.countdown_remaining_ms/1000)+' s\\nCamera ready: '+s.camera_ready+'\\nLast error: '+(s.last_error||'none');"
 "var busy=s.state!=='armed';sh.disabled=busy||!/^[0-9]{6}$/.test(pin.value);cancel.hidden=!(s.state==='countdown'||s.state==='focusing');"
 "schedule((s.state==='countdown'||s.state==='focusing')?350:(s.state==='capturing'||s.state==='cooldown')?1000:5000);});}"
 "function id(){return 'phone-'+new Date().getTime()+'-'+Math.floor(Math.random()*1000000);}"
