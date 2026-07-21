@@ -265,7 +265,23 @@ public final class WifiDirectController {
         if (candidate.charAt(0) == '/') candidate = candidate.substring(1);
         int slash = candidate.indexOf('/');
         if (slash >= 0) candidate = candidate.substring(0, slash);
-        return candidate.length() == 0 ? DEFAULT_ADDRESS : candidate;
+        return isIpv4Address(candidate) ? candidate : DEFAULT_ADDRESS;
+    }
+
+    private boolean isIpv4Address(String candidate) {
+        String[] parts = candidate == null ? new String[0] : candidate.split("\\.", -1);
+        if (parts.length != 4) return false;
+        for (int i = 0; i < parts.length; ++i) {
+            if (parts[i].length() == 0 || parts[i].length() > 3) return false;
+            int value = 0;
+            for (int j = 0; j < parts[i].length(); ++j) {
+                char digit = parts[i].charAt(j);
+                if (digit < '0' || digit > '9') return false;
+                value = value * 10 + digit - '0';
+            }
+            if (value > 255) return false;
+        }
+        return true;
     }
 
     private String valueOrEmpty(String value) {

@@ -18,7 +18,11 @@ public:
         JNIEnv *env = NULL;
         bool attached = false;
         if (g_vm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6) != JNI_OK) {
+#ifdef __ANDROID__
+            if (g_vm->AttachCurrentThread(&env, NULL) != JNI_OK) return false;
+#else
             if (g_vm->AttachCurrentThread(reinterpret_cast<void **>(&env), NULL) != JNI_OK) return false;
+#endif
             attached = true;
         }
         jstring text = env->NewStringUTF(command.text.c_str());

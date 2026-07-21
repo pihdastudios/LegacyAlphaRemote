@@ -20,6 +20,9 @@ int nonblocking(int fd) {
     int flags = fcntl(fd, F_GETFL, 0);
     return flags < 0 ? -1 : fcntl(fd, F_SETFL, flags | O_NONBLOCK);
 }
+std::string portText(int port) {
+    char value[16]; snprintf(value, sizeof(value), "%d", port); return value;
+}
 }
 
 HttpServer::HttpServer(const NativeConfig &config, HttpRequestHandler &handler)
@@ -70,10 +73,21 @@ bool HttpServer::openListener(const std::string &address) {
     setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
     struct sockaddr_in addr; memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET; addr.sin_port = htons(config_.port);
-    if (address.empty() || address == "0.0.0.0") addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    else if (inet_aton(address.c_str(), &addr.sin_addr) == 0) { close(fd); return false; }
-    if (bind(fd, reinterpret_cast<struct sockaddr *>(&addr), sizeof(addr)) != 0 ||
-        listen(fd, static_cast<int>(config_.maxClients)) != 0 || nonblocking(fd) != 0) {
+    if (address.empty() || address == "0.0.0.0") {
+        addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    } else if (inet_aton(address.c_str(), &addr.sin_addr) == 0) {
+        // Some Sony firmware reports the P2P interface identifier instead of
+        // its IPv4 address. Bind all local interfaces and keep the Java-side
+        // validated default URL for that case.
+        addr.sin_addr.s_addr = htonl(INADDR_ANY);
+        nativeLog("WARN", std::string("invalid bind address '") + address + "'; using wildcard");
+    }
+    if (bind(fd, reinterpret_cast<struct sockaddr *>(&addr), sizeof(addr)) != 0) {
+        nativeLog("ERROR", std::string("bind failed on port ") + portText(config_.port) + ": " + strerror(errno));
+        close(fd); return false;
+    }
+    if (listen(fd, static_cast<int>(config_.maxClients)) != 0 || nonblocking(fd) != 0) {
+        nativeLog("ERROR", std::string("listen setup failed on port ") + portText(config_.port) + ": " + strerror(errno));
         close(fd); return false;
     }
     listener_ = fd;
@@ -151,7 +165,7 @@ void HttpServer::run() {
         else if (listener_ < 0 && now >= nextListenAttemptMs_) {
             if (!openListener(handler_.listenAddress())) {
                 nextListenAttemptMs_ = now + 1000;
-                handler_.onServerError("HTTP listener could not bind");
+                handler_.onServerError(std::string("HTTP listener could not bind on port ") + portText(config_.port));
             }
         }
         std::vector<struct pollfd> descriptors;
