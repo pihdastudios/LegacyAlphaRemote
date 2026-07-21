@@ -36,7 +36,8 @@ NativeRuntime::NativeRuntime(JavaDispatcher &dispatcher, int port)
     : dispatcher_(dispatcher), config_(configForPort(port)), clock_(), state_(config_, clock_, *this),
       server_(config_, *this), deduplicator_(64, config_.dedupeRetentionMs),
       mutationLimiter_(6.0, 1.0, 16), statusLimiter_(20.0, 4.0, 16),
-      started_(false), address_("192.168.122.1") {
+      started_(false), address_("192.168.122.1"), previewWidth_(0),
+      previewHeight_(0), previewVersion_(0) {
     pthread_mutex_init(&mutex_, NULL);
 }
 
@@ -61,7 +62,9 @@ bool NativeRuntime::start() {
     Lock lock(&mutex_);
     if (started_) return true;
     generatePin(); serverError_.clear(); wifiError_.clear(); deduplicator_.clear();
-    mutationLimiter_.clear(); statusLimiter_.clear(); state_.start();
+    mutationLimiter_.clear(); statusLimiter_.clear(); previewJpeg_.clear();
+    previewWidth_ = previewHeight_ = 0; previewVersion_ = 0;
+    previewSource_.clear(); previewError_.clear(); state_.start();
     if (!server_.start()) { state_.stop(); pin_.clear(); return false; }
     started_ = true; nativeLog("INFO", "native runtime version 0.1.0 started");
     updateScreen(true); return true;
@@ -71,7 +74,9 @@ void NativeRuntime::stop() {
     {
         Lock lock(&mutex_);
         if (!started_) return;
-        started_ = false; state_.stop(); pin_.clear();
+        started_ = false; state_.stop(); pin_.clear(); previewJpeg_.clear();
+        previewWidth_ = previewHeight_ = 0; previewVersion_ = 0;
+        previewSource_.clear(); previewError_.clear();
     }
     server_.stop(); nativeLog("INFO", "native runtime stopped");
 }
@@ -105,6 +110,27 @@ bool NativeRuntime::physicalShutter(bool pressed) {
     Lock lock(&mutex_); std::string error; bool ok = state_.physicalShutter(pressed, &error); updateScreen(true); server_.wake(); return ok;
 }
 
+void NativeRuntime::setPreview(const unsigned char *data, size_t size, int width,
+                               int height, const std::string &source,
+                               const std::string &error) {
+    Lock lock(&mutex_);
+    previewError_ = error;
+    if (data == NULL || size == 0) {
+        nativeLog("WARN", std::string("preview unavailable: ") + error);
+        return;
+    }
+    if (size > 1572864 || width <= 0 || height <= 0) {
+        previewError_ = "preview exceeds safety limits";
+        nativeLog("WARN", previewError_);
+        return;
+    }
+    previewJpeg_.assign(data, data + size);
+    previewWidth_ = width; previewHeight_ = height;
+    previewSource_ = source; previewError_.clear(); ++previewVersion_;
+    nativeLog("INFO", std::string("preview updated source=") + source);
+    server_.wake();
+}
+
 bool NativeRuntime::dispatch(const NativeCommand &command) {
     return started_ && dispatcher_.dispatchToJava(command);
 }
@@ -128,15 +154,19 @@ bool NativeRuntime::authenticate(const std::string &candidate) const {
 std::string NativeRuntime::statusJson() const {
     const std::string error = !state_.lastError().empty() ? state_.lastError() :
                               !wifiError_.empty() ? wifiError_ : serverError_;
-    char numbers[192];
+    char numbers[320];
     snprintf(numbers, sizeof(numbers),
-             ",\"wifi_ready\":%s,\"camera_ready\":%s,\"client_count\":%d,\"countdown_remaining_ms\":%d",
+             ",\"wifi_ready\":%s,\"camera_ready\":%s,\"client_count\":%d,\"countdown_remaining_ms\":%d,\"preview_available\":%s,\"preview_version\":%lld,\"preview_width\":%d,\"preview_height\":%d",
              state_.wifiReady() ? "true" : "false", state_.cameraReady() ? "true" : "false",
-             state_.clientCount(), state_.countdownRemainingMs());
+             state_.clientCount(), state_.countdownRemainingMs(),
+             previewJpeg_.empty() ? "false" : "true",
+             static_cast<long long>(previewVersion_), previewWidth_, previewHeight_);
     return std::string("{\"ok\":true,\"version\":\"0.1.0\",\"state\":") +
            jsonString(stateName(state_.state())) + numbers +
            ",\"last_request_id\":" + jsonString(state_.lastRequestId()) +
-           ",\"last_error\":" + jsonString(error) + "}";
+           ",\"last_error\":" + jsonString(error) +
+           ",\"preview_source\":" + jsonString(previewSource_) +
+           ",\"preview_error\":" + jsonString(previewError_) + "}";
 }
 
 std::string NativeRuntime::screenText() const {
@@ -177,6 +207,12 @@ std::string NativeRuntime::handleRequest(const HttpRequest &request,
         if (request.path == "/style.css") return makeHttpResponse(200, "text/css; charset=utf-8", kStyleCss);
         if (request.path == "/app.js") return makeHttpResponse(200, "application/javascript; charset=utf-8", kAppJs);
         if (request.path == "/api/v1/status") return makeHttpResponse(200, "application/json; charset=utf-8", statusJson());
+        if (request.path == "/api/v1/preview.jpg") {
+            if (!authenticate(request.pin)) return makeJsonError(401, "authentication required");
+            if (previewJpeg_.empty()) return makeJsonError(404, "preview unavailable");
+            const std::string body(reinterpret_cast<const char *>(&previewJpeg_[0]), previewJpeg_.size());
+            return makeHttpResponse(200, "image/jpeg", body);
+        }
         return makeJsonError(404, "not found");
     }
     if (request.method != "POST") return makeJsonError(405, "method not allowed");

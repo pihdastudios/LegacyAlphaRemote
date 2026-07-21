@@ -22,6 +22,8 @@ public final class NativeBridge {
     public static native void nativeSetCameraReady(boolean ready);
     public static native void nativeSetWifiState(boolean ready, String ssid,
             String password, String address, int stationCount, String error);
+    public static native void nativeSetPreview(byte[] jpeg, int width, int height,
+            String source, String error);
     public static native void nativeReportCommandResult(
             long commandId, int commandType, int resultCode, String message);
     public static native boolean nativePhysicalFocus(boolean pressed);

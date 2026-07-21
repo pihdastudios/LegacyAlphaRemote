@@ -114,3 +114,18 @@ extern "C" JNIEXPORT jboolean JNICALL
 Java_io_pihda_legacyalpharemote_NativeBridge_nativePhysicalShutter(JNIEnv *, jclass, jboolean pressed) {
     return g_runtime != NULL && g_runtime->physicalShutter(pressed == JNI_TRUE) ? JNI_TRUE : JNI_FALSE;
 }
+
+extern "C" JNIEXPORT void JNICALL
+Java_io_pihda_legacyalpharemote_NativeBridge_nativeSetPreview(JNIEnv *env, jclass,
+        jbyteArray jpeg, jint width, jint height, jstring source, jstring error) {
+    if (g_runtime == NULL) return;
+    const char *s = source == NULL ? "" : env->GetStringUTFChars(source, NULL);
+    const char *e = error == NULL ? "" : env->GetStringUTFChars(error, NULL);
+    jbyte *bytes = jpeg == NULL ? NULL : env->GetByteArrayElements(jpeg, NULL);
+    jsize size = jpeg == NULL ? 0 : env->GetArrayLength(jpeg);
+    g_runtime->setPreview(reinterpret_cast<unsigned char *>(bytes),
+                          static_cast<size_t>(size), width, height, s, e);
+    if (bytes != NULL) env->ReleaseByteArrayElements(jpeg, bytes, JNI_ABORT);
+    if (source != NULL) env->ReleaseStringUTFChars(source, s);
+    if (error != NULL) env->ReleaseStringUTFChars(error, e);
+}

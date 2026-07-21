@@ -4,6 +4,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.SurfaceView;
+import android.view.View;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 public final class LegacyAlphaRemoteActivity extends BaseActivity
@@ -13,6 +15,7 @@ public final class LegacyAlphaRemoteActivity extends BaseActivity
 
     private Handler mainHandler;
     private TextView statusView;
+    private ScrollView diagnosticsOverlay;
     private SonyCameraController cameraController;
     private WifiDirectController wifiController;
     private boolean resumed;
@@ -25,6 +28,8 @@ public final class LegacyAlphaRemoteActivity extends BaseActivity
         setContentView(R.layout.activity_legacy_alpha_remote);
         mainHandler = new Handler();
         statusView = (TextView) findViewById(R.id.remoteStatus);
+        diagnosticsOverlay = (ScrollView) findViewById(R.id.diagnosticsOverlay);
+        diagnosticsOverlay.setVisibility(View.VISIBLE);
         SurfaceView preview = (SurfaceView) findViewById(R.id.cameraPreview);
         cameraController = new SonyCameraController(preview, this);
         wifiController = new WifiDirectController(this, this);
@@ -118,6 +123,14 @@ public final class LegacyAlphaRemoteActivity extends BaseActivity
     }
 
     @Override
+    public void onCameraPreview(byte[] jpeg, int width, int height,
+            String source, String error) {
+        if (nativeStarted) {
+            NativeBridge.nativeSetPreview(jpeg, width, height, source, error);
+        }
+    }
+
+    @Override
     public void onWifiInfo(boolean ready, String ssid, String password,
             String address, int stationCount, String error) {
         if (nativeStarted) {
@@ -156,6 +169,15 @@ public final class LegacyAlphaRemoteActivity extends BaseActivity
     @Override
     protected boolean onDeleteKeyUp() {
         finish();
+        return true;
+    }
+
+    @Override
+    protected boolean onUpKeyUp() {
+        boolean visible = diagnosticsOverlay.getVisibility() == View.VISIBLE;
+        diagnosticsOverlay.setVisibility(visible ? View.GONE : View.VISIBLE);
+        Logger.info("LegacyAlphaRemote: diagnostics overlay "
+                + (visible ? "hidden" : "shown"));
         return true;
     }
 

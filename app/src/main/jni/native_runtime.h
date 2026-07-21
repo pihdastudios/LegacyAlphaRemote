@@ -7,6 +7,7 @@
 #include "request_deduplicator.h"
 
 #include <pthread.h>
+#include <vector>
 
 namespace legacyalpha {
 
@@ -30,6 +31,9 @@ public:
                              const std::string &message);
     bool physicalFocus(bool pressed);
     bool physicalShutter(bool pressed);
+    void setPreview(const unsigned char *data, size_t size, int width,
+                    int height, const std::string &source,
+                    const std::string &error);
 
     virtual bool dispatch(const NativeCommand &command);
     virtual bool serverReady();
@@ -63,6 +67,12 @@ private:
     std::string wifiError_;
     std::string serverError_;
     std::string previousScreen_;
+    std::vector<unsigned char> previewJpeg_;
+    int previewWidth_;
+    int previewHeight_;
+    int64_t previewVersion_;
+    std::string previewSource_;
+    std::string previewError_;
 };
 
 }  // namespace legacyalpha
