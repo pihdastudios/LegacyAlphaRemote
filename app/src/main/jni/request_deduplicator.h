@@ -8,14 +8,13 @@
 namespace legacyalpha {
 
 class RequestDeduplicator {
-public:
+  public:
     RequestDeduplicator(size_t maximum, int64_t retentionMs);
-    bool find(const std::string &requestId, int64_t nowMs, int *status,
-              std::string *body);
-    void remember(const std::string &requestId, int status,
-                  const std::string &body, int64_t nowMs);
+    bool find(const std::string& requestId, int64_t nowMs, int* status, std::string* body);
+    void remember(const std::string& requestId, int status, const std::string& body, int64_t nowMs);
     void clear();
-private:
+
+  private:
     struct Entry {
         std::string requestId;
         int status;
@@ -28,6 +27,6 @@ private:
     std::vector<Entry> entries_;
 };
 
-}  // namespace legacyalpha
+} // namespace legacyalpha
 
 #endif

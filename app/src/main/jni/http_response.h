@@ -5,10 +5,9 @@
 
 namespace legacyalpha {
 
-std::string makeHttpResponse(int status, const char *contentType,
-                             const std::string &body);
-std::string makeJsonError(int status, const std::string &message);
+std::string makeHttpResponse(int status, const char* contentType, const std::string& body);
+std::string makeJsonError(int status, const std::string& message);
 
-}  // namespace legacyalpha
+} // namespace legacyalpha
 
 #endif

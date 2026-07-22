@@ -35,12 +35,12 @@ struct FocusRequest {
     FocusRequest() : pressed(false) {}
 };
 
-ParseResult parseHttpRequest(const std::string &data, const NativeConfig &config,
-                             HttpRequest *request, size_t *consumed);
-bool parseCaptureJson(const std::string &body, CaptureRequest *request);
-bool parseFocusJson(const std::string &body, FocusRequest *request);
-bool validRequestId(const std::string &requestId);
+ParseResult parseHttpRequest(const std::string& data, const NativeConfig& config,
+                             HttpRequest* request, size_t* consumed);
+bool parseCaptureJson(const std::string& body, CaptureRequest* request);
+bool parseFocusJson(const std::string& body, FocusRequest* request);
+bool validRequestId(const std::string& requestId);
 
-}  // namespace legacyalpha
+} // namespace legacyalpha
 
 #endif

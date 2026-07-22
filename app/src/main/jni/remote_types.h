@@ -53,8 +53,8 @@ struct NativeCommand {
     NativeCommand() : id(0), type(COMMAND_UPDATE_SCREEN), argument(0) {}
 };
 
-const char *stateName(RemoteState state);
+const char* stateName(RemoteState state);
 
-}  // namespace legacyalpha
+} // namespace legacyalpha
 
 #endif

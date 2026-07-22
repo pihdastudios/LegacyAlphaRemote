@@ -12,45 +12,41 @@
 namespace legacyalpha {
 
 class JavaDispatcher {
-public:
+  public:
     virtual ~JavaDispatcher() {}
-    virtual bool dispatchToJava(const NativeCommand &command) = 0;
+    virtual bool dispatchToJava(const NativeCommand& command) = 0;
 };
 
 class NativeRuntime : public CommandSink, public HttpRequestHandler {
-public:
-    NativeRuntime(JavaDispatcher &dispatcher, int port);
+  public:
+    NativeRuntime(JavaDispatcher& dispatcher, int port);
     ~NativeRuntime();
     bool start();
     void stop();
     void setCameraReady(bool ready);
-    void setWifiState(bool ready, const std::string &ssid,
-                      const std::string &password, const std::string &address,
-                      int stationCount, const std::string &error);
-    void reportCommandResult(int64_t commandId, int resultCode,
-                             const std::string &message);
+    void setWifiState(bool ready, const std::string& ssid, const std::string& password,
+                      const std::string& address, int stationCount, const std::string& error);
+    void reportCommandResult(int64_t commandId, int resultCode, const std::string& message);
     bool physicalFocus(bool pressed);
     bool physicalShutter(bool pressed);
-    void setPreview(const unsigned char *data, size_t size, int width,
-                    int height, const std::string &source,
-                    const std::string &error);
+    void setPreview(const unsigned char* data, size_t size, int width, int height,
+                    const std::string& source, const std::string& error);
 
-    virtual bool dispatch(const NativeCommand &command);
+    virtual bool dispatch(const NativeCommand& command);
     virtual bool serverReady();
     virtual std::string listenAddress();
-    virtual std::string handleRequest(const HttpRequest &request,
-                                      const std::string &remoteAddress);
+    virtual std::string handleRequest(const HttpRequest& request, const std::string& remoteAddress);
     virtual void onServerTick();
-    virtual void onServerError(const std::string &error);
+    virtual void onServerError(const std::string& error);
 
-private:
-    bool authenticate(const std::string &candidate) const;
+  private:
+    bool authenticate(const std::string& candidate) const;
     std::string statusJson() const;
     std::string screenText() const;
     void updateScreen(bool force);
     bool generatePin();
 
-    JavaDispatcher &dispatcher_;
+    JavaDispatcher& dispatcher_;
     NativeConfig config_;
     MonotonicClock clock_;
     RemoteStateMachine state_;
@@ -75,6 +71,6 @@ private:
     std::string previewError_;
 };
 
-}  // namespace legacyalpha
+} // namespace legacyalpha
 
 #endif

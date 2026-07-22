@@ -3,30 +3,29 @@ package io.pihda.legacyalpharemote;
 import java.util.ArrayList;
 
 public class AppNotificationManager {
-    public interface NotificationListener {
-        void onNotify(String message);
-    }
+  public interface NotificationListener {
+    void onNotify(String message);
+  }
 
-    private static final AppNotificationManager instance = new AppNotificationManager();
+  private static final AppNotificationManager instance = new AppNotificationManager();
 
-    public static AppNotificationManager getInstance() {
-        return instance;
-    }
+  public static AppNotificationManager getInstance() {
+    return instance;
+  }
 
-    private ArrayList<NotificationListener> listeners = new ArrayList<NotificationListener>();
+  private ArrayList<NotificationListener> listeners = new ArrayList<NotificationListener>();
 
-    private AppNotificationManager() {}
+  private AppNotificationManager() {}
 
-    public void notify(String message) {
-        for (NotificationListener listener : listeners)
-            listener.onNotify(message);
-    }
+  public void notify(String message) {
+    for (NotificationListener listener : listeners) listener.onNotify(message);
+  }
 
-    public void addListener(NotificationListener listener) {
-        listeners.add(listener);
-    }
+  public void addListener(NotificationListener listener) {
+    listeners.add(listener);
+  }
 
-    public void removeListener(NotificationListener listener) {
-        listeners.remove(listener);
-    }
+  public void removeListener(NotificationListener listener) {
+    listeners.remove(listener);
+  }
 }

@@ -6,16 +6,16 @@
 namespace legacyalpha {
 
 class Clock {
-public:
+  public:
     virtual ~Clock() {}
     virtual int64_t nowMs() const = 0;
 };
 
 class MonotonicClock : public Clock {
-public:
+  public:
     virtual int64_t nowMs() const;
 };
 
-}  // namespace legacyalpha
+} // namespace legacyalpha
 
 #endif

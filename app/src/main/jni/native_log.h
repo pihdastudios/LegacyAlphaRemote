@@ -5,9 +5,9 @@
 
 namespace legacyalpha {
 
-void nativeLogSetPath(const std::string &path);
-void nativeLog(const char *level, const std::string &message);
+void nativeLogSetPath(const std::string& path);
+void nativeLog(const char* level, const std::string& message);
 
-}  // namespace legacyalpha
+} // namespace legacyalpha
 
 #endif

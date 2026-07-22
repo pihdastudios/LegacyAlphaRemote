@@ -7,6 +7,6 @@ extern const char kIndexHtml[];
 extern const char kStyleCss[];
 extern const char kAppJs[];
 
-}  // namespace legacyalpha
+} // namespace legacyalpha
 
 #endif

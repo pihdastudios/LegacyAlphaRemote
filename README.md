@@ -6,14 +6,18 @@ Legacy Alpha Remote is a Sony PMCADemo/OpenMemories Android 10 application for t
 
 Build and install helpers live in `scripts/`: `build.sh`, `verify-apk.sh`, `usb-status.sh`, `install.sh`, and `build-install.sh`. On modern Linux hosts, NDK r14b may need temporary `/tmp/legacyalpha-libs` symlinks for `libncurses.so.5` and `libtinfo.so.5`; the build script uses that directory automatically when present.
 
+Run `./scripts/format.sh` to format first-party C/C++ and Java, or
+`./scripts/format.sh --check` to verify formatting without changing files.
+
 The native service deliberately stays small and bounded: four clients, bounded request/header/body buffers, HTTP/1.0-style close responses, an allowlisted JSON API, per-client token-bucket rate limits, constant-time PIN comparison, request-id deduplication, and a single serialized camera command queue. The web UI is embedded in the native library, so no writable storage is used for web assets.
 
 Build with the repository's pinned Gradle 2.14.1, Android SDK API 10/build-tools 25.0.2, and NDK r14b toolchain. The host parser/state-machine regression test can be run with:
 
 ```sh
-g++ -std=c++11 -pthread -I app/src/main/jni \
-  app/src/test/native/remote_native_test.cpp app/src/main/jni/*.cpp \
+g++ -std=c++11 -pthread -fsanitize=address,undefined -fno-omit-frame-pointer \
+  -I app/src/main/jni app/src/test/native/remote_native_test.cpp \
+  app/src/main/jni/http_parser.cpp app/src/main/jni/remote_state_machine.cpp \
+  app/src/main/jni/remote_types.cpp app/src/main/jni/native_log.cpp \
   -o /tmp/legacyalpha-native-test
+ASAN_OPTIONS=detect_leaks=0 /tmp/legacyalpha-native-test
 ```
-
-Exclude `legacyalpharemote_jni.cpp` from that host command unless JNI headers are available.

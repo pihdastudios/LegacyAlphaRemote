@@ -8,16 +8,17 @@
 namespace legacyalpha {
 
 class CommandQueue {
-public:
+  public:
     explicit CommandQueue(size_t maximum);
-    bool push(const NativeCommand &command);
-    bool pop(NativeCommand *command);
+    bool push(const NativeCommand& command);
+    bool pop(NativeCommand* command);
     void clear();
-private:
+
+  private:
     size_t maximum_;
     std::deque<NativeCommand> commands_;
 };
 
-}  // namespace legacyalpha
+} // namespace legacyalpha
 
 #endif

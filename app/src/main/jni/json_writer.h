@@ -5,9 +5,9 @@
 
 namespace legacyalpha {
 
-std::string jsonEscape(const std::string &value);
-std::string jsonString(const std::string &value);
+std::string jsonEscape(const std::string& value);
+std::string jsonString(const std::string& value);
 
-}  // namespace legacyalpha
+} // namespace legacyalpha
 
 #endif
